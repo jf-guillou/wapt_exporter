@@ -1,4 +1,4 @@
-module github.com/jf_guillou/wapt_exporter
+module github.com/jf-guillou/wapt_exporter
 
 go 1.19
 
