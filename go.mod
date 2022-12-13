@@ -1,4 +1,4 @@
-module gitlab.univ-nantes.fr/snps/cephfs-foldersize-exporter
+module github.com/jf_guillou/wapt_exporter
 
 go 1.19
 
