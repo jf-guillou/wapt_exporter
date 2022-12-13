@@ -27,7 +27,7 @@ var (
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	// Probably need a flag to handle log levels
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 
 	flag.Parse()
