@@ -25,9 +25,9 @@ type WaptPingResponse struct {
 }
 
 type WaptHost struct {
-	Uuid       string
-	HostStatus string
-	Reachable  string
+	Uuid        string
+	Host_status string
+	Reachable   string
 }
 
 type WaptHostsResponse struct {
@@ -43,25 +43,26 @@ func waptPing(endpoint string) float64 {
 	}
 
 	u = u.JoinPath("/ping")
+	log.Debug().Str("url", u.String()).Msg("Sending API request")
 	r, err := http.Get(u.String())
 	if err != nil {
-		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to ping")
+		log.Error().Err(err).Str("url", u.String()).Msg("Failed to ping")
 		return -1
 	}
 
 	var pingResponse WaptPingResponse
 	err = json.NewDecoder(r.Body).Decode(&pingResponse)
 	if err != nil {
-		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to read ping response")
+		log.Error().Err(err).Str("url", u.String()).Msg("Failed to read ping response")
 		return -1
 	}
 
 	if !pingResponse.Success {
-		log.Warn().Str("endpoint", endpoint).Msg("Got ping response but success = false")
+		log.Warn().Msg("Got ping response but success = false")
 		return -1
 	}
 
-	log.Debug().Str("endpoint", endpoint).Float64("time", pingResponse.Request_time).Msg("Got ping response")
+	log.Debug().Float64("time", pingResponse.Request_time).Msg("Got ping response")
 	return pingResponse.Request_time
 }
 
@@ -81,27 +82,29 @@ func waptHosts(endpoint, username, password string) *WaptHostsResponse {
 
 	u = u.JoinPath("/api/v3/hosts")
 	u.User = url.UserPassword(username, password)
-	r, err := http.Get(u.String())
 	query := u.Query()
 	// Max 10k hosts
 	query.Add("limit", fmt.Sprintf("%d", MAX_HOSTS))
 	u.RawQuery = query.Encode()
+	log.Debug().Str("url", u.String()).Msg("Sending API request")
+	r, err := http.Get(u.String())
 	if err != nil {
-		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to get hosts")
+		log.Error().Err(err).Str("url", u.String()).Msg("Failed to get hosts")
 		return nil
 	}
 
 	var hostsResponse WaptHostsResponse
 	err = json.NewDecoder(r.Body).Decode(&hostsResponse)
 	if err != nil {
-		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to read hosts response")
+		log.Error().Err(err).Msg("Failed to read hosts response")
 		return nil
 	}
 
 	if !hostsResponse.Success {
-		log.Warn().Str("endpoint", endpoint).Msg("Got hosts response but success = false")
+		log.Warn().Msg("Got hosts response but success = false")
 		return nil
 	}
 
+	log.Debug().Msg("Got hosts response")
 	return &hostsResponse
 }
