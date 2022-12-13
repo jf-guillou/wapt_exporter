@@ -12,9 +12,9 @@ import (
 const MAX_HOSTS = 10000
 
 type WaptResponse struct {
-	Success      bool
-	Msg          string
-	Request_time float64
+	Success     bool
+	Msg         string
+	RequestTime float64 `json:"request_time"`
 }
 
 type WaptPingResponse struct {
@@ -26,8 +26,9 @@ type WaptPingResponse struct {
 
 type WaptHost struct {
 	Uuid        string
-	Host_status string
+	HostStatus  string `json:"host_status"`
 	Reachable   string
+	WaptVersion string `json:"wapt_version"`
 }
 
 type WaptHostsResponse struct {
@@ -62,8 +63,8 @@ func waptPing(endpoint string) float64 {
 		return -1
 	}
 
-	log.Debug().Float64("time", pingResponse.Request_time).Msg("Got ping response")
-	return pingResponse.Request_time
+	log.Debug().Float64("time", pingResponse.RequestTime).Msg("Got ping response")
+	return pingResponse.RequestTime
 }
 
 func isWaptUp(endpoint string) float64 {

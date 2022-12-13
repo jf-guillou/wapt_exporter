@@ -5,9 +5,8 @@ import (
 )
 
 type WaptCollector struct {
-	up     *prometheus.Desc
-	hosts  *prometheus.Desc
-	online *prometheus.Desc
+	up    *prometheus.Desc
+	hosts *prometheus.Desc
 }
 
 func NewWaptCollector() *WaptCollector {
@@ -18,11 +17,7 @@ func NewWaptCollector() *WaptCollector {
 		),
 		hosts: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "hosts"),
-			"Total registered hosts", nil, nil,
-		),
-		online: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "online"),
-			"Online hosts", nil, nil,
+			"Registered hosts", []string{"reachable", "version"}, nil,
 		),
 	}
 }
@@ -35,23 +30,28 @@ func (c *WaptCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
+	// Hosts
 	hosts := waptHosts(*waptApi, *waptUser, *waptPassword)
 	if hosts == nil {
 		return
 	}
-	ch <- prometheus.MustNewConstMetric(c.hosts, prometheus.GaugeValue, float64(len(hosts.Result)))
 
-	onlineCount := 0
+	vmap := make(map[string]map[string]float64)
 	for _, h := range hosts.Result {
-		if h.Reachable == "OK" {
-			onlineCount += 1
+		if vmap[h.WaptVersion] == nil {
+			vmap[h.WaptVersion] = make(map[string]float64)
+		}
+		vmap[h.WaptVersion][h.Reachable] += 1
+	}
+
+	for version, reachableStates := range vmap {
+		for reachableState, count := range reachableStates {
+			ch <- prometheus.MustNewConstMetric(c.hosts, prometheus.GaugeValue, count, reachableState, version)
 		}
 	}
-	ch <- prometheus.MustNewConstMetric(c.online, prometheus.GaugeValue, float64(onlineCount))
 }
 
 func (c *WaptCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.up
 	ch <- c.hosts
-	ch <- c.online
 }
