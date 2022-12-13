@@ -36,6 +36,16 @@ type WaptHostsResponse struct {
 	Result []WaptHost
 }
 
+type WaptPackage struct {
+	Package string
+	Version string
+}
+
+type WaptPackagesResponse struct {
+	*WaptResponse
+	Result []WaptPackage
+}
+
 func waptPing(endpoint string) float64 {
 	u, err := url.Parse(endpoint)
 	if err != nil {
@@ -108,4 +118,36 @@ func waptHosts(endpoint, username, password string) *WaptHostsResponse {
 
 	log.Debug().Msg("Got hosts response")
 	return &hostsResponse
+}
+
+func waptPackages(endpoint, username, password string) *WaptPackagesResponse {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to parse endpoint")
+		return nil
+	}
+
+	u = u.JoinPath("/api/v3/packages")
+	u.User = url.UserPassword(username, password)
+	log.Debug().Str("url", u.String()).Msg("Sending API request")
+	r, err := http.Get(u.String())
+	if err != nil {
+		log.Error().Err(err).Str("url", u.String()).Msg("Failed to get packages")
+		return nil
+	}
+
+	var packagesResponse WaptPackagesResponse
+	err = json.NewDecoder(r.Body).Decode(&packagesResponse)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read packages response")
+		return nil
+	}
+
+	if !packagesResponse.Success {
+		log.Warn().Msg("Got packages response but success = false")
+		return nil
+	}
+
+	log.Debug().Msg("Got packages response")
+	return &packagesResponse
 }

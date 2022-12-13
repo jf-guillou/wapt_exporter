@@ -5,8 +5,9 @@ import (
 )
 
 type WaptCollector struct {
-	up    *prometheus.Desc
-	hosts *prometheus.Desc
+	up       *prometheus.Desc
+	hosts    *prometheus.Desc
+	packages *prometheus.Desc
 }
 
 func NewWaptCollector() *WaptCollector {
@@ -18,6 +19,10 @@ func NewWaptCollector() *WaptCollector {
 		hosts: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "hosts"),
 			"Registered hosts", []string{"reachable", "version"}, nil,
+		),
+		packages: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "", "packages"),
+			"Local packages", nil, nil,
 		),
 	}
 }
@@ -49,9 +54,17 @@ func (c *WaptCollector) Collect(ch chan<- prometheus.Metric) {
 			ch <- prometheus.MustNewConstMetric(c.hosts, prometheus.GaugeValue, count, reachableState, version)
 		}
 	}
+
+	// Packages
+	packages := waptPackages(*waptApi, *waptUser, *waptPassword)
+	if packages == nil {
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(c.packages, prometheus.GaugeValue, float64(len(packages.Result)))
 }
 
 func (c *WaptCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.up
 	ch <- c.hosts
+	ch <- c.packages
 }
