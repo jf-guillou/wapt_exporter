@@ -12,8 +12,8 @@ import (
 const MAX_HOSTS = 10000
 
 type WaptResponse struct {
-	Success     bool
-	Msg         string
+	Success     bool    `json:"success"`
+	Msg         string  `json:"msg"`
 	RequestTime float64 `json:"request_time"`
 }
 
@@ -21,29 +21,29 @@ type WaptPingResponse struct {
 	*WaptResponse
 	Result struct {
 		Version string
-	}
+	} `json:"result"`
 }
 
 type WaptHost struct {
-	Uuid        string
+	Uuid        string `json:"uuid"`
 	HostStatus  string `json:"host_status"`
-	Reachable   string
+	Reachable   string `json:"reachable"`
 	WaptVersion string `json:"wapt_version"`
 }
 
 type WaptHostsResponse struct {
 	*WaptResponse
-	Result []WaptHost
+	Result []WaptHost `json:"result"`
 }
 
 type WaptPackage struct {
-	Package string
-	Version string
+	Package string `json:"package"`
+	Version string `json:"version"`
 }
 
 type WaptPackagesResponse struct {
 	*WaptResponse
-	Result []WaptPackage
+	Result []WaptPackage `json:"result"`
 }
 
 func waptPing(endpoint string) float64 {
