@@ -18,8 +18,8 @@ type WaptResponse struct {
 }
 
 type WaptPingResponse struct {
-	*WaptResponse
-	Result struct {
+	Success bool `json:"success"`
+	Result  struct {
 		Version string
 	} `json:"result"`
 }
@@ -46,11 +46,11 @@ type WaptPackagesResponse struct {
 	Result []WaptPackage `json:"result"`
 }
 
-func waptPing(endpoint string) float64 {
+func waptPing(endpoint string) bool {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		log.Error().Err(err).Str("endpoint", endpoint).Msg("Failed to parse endpoint")
-		return -1
+		return false
 	}
 
 	u = u.JoinPath("/ping")
@@ -58,27 +58,27 @@ func waptPing(endpoint string) float64 {
 	r, err := http.Get(u.String())
 	if err != nil {
 		log.Error().Err(err).Str("url", u.String()).Msg("Failed to ping")
-		return -1
+		return false
 	}
 
 	var pingResponse WaptPingResponse
 	err = json.NewDecoder(r.Body).Decode(&pingResponse)
 	if err != nil {
 		log.Error().Err(err).Str("url", u.String()).Msg("Failed to read ping response")
-		return -1
+		return false
 	}
 
 	if !pingResponse.Success {
-		log.Warn().Msg("Got ping response but success = false")
-		return -1
+		log.Warn().Bool("success", pingResponse.Success).Msg("Got ping error response")
+		return false
 	}
 
-	log.Debug().Float64("time", pingResponse.RequestTime).Msg("Got ping response")
-	return pingResponse.RequestTime
+	log.Debug().Bool("success", pingResponse.Success).Msg("Got ping response")
+	return pingResponse.Success
 }
 
 func isWaptUp(endpoint string) float64 {
-	if waptPing(endpoint) > 0 {
+	if waptPing(endpoint) {
 		return 1
 	}
 	return 0
